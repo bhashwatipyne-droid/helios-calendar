@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CalendarArt from './CalendarArt';
 import { SuccessModal, SampleModal } from './Modals';
+import PhotoCropper, { CROP_RATIO } from './PhotoCropper';
 import { YEAR, drawCalendar, loadImage } from '@/lib/calendar';
 
 const MAX_BYTES = 15 * 1024 * 1024;
 const PROCESSING_MS = 1800;
+const ASPECT_TOLERANCE = 0.02; // photos within 2% of 5:4 skip the crop step
 
 export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const [success, setSuccess] = useState(false);
   const [sampleOpen, setSampleOpen] = useState(false);
   const [sampleImg, setSampleImg] = useState<string | null>(null);
+  const [cropSource, setCropSource] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
@@ -34,16 +37,26 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       const src = reader.result as string;
       const img = await loadImage(src);
       if (!img) return setError('We could not read that photo. Please try another one.');
-      imgRef.current = img;
       setError('');
-      setProcessing(true);
-      // TODO: background removal / server-side processing goes here.
-      timer.current = setTimeout(() => {
-        setProcessing(false);
-        setPhoto(src);
-      }, PROCESSING_MS);
+      const ratio = img.naturalWidth / img.naturalHeight;
+      if (Math.abs(ratio - CROP_RATIO) / CROP_RATIO > ASPECT_TOLERANCE) {
+        setCropSource(img); // not 5:4 -> let the user crop / resize first
+      } else {
+        commitPhoto(src, img);
+      }
     };
     reader.readAsDataURL(f);
+  }
+
+  function commitPhoto(src: string, img: HTMLImageElement) {
+    setCropSource(null);
+    imgRef.current = img;
+    setProcessing(true);
+    // TODO: background removal / server-side processing goes here.
+    timer.current = setTimeout(() => {
+      setProcessing(false);
+      setPhoto(src);
+    }, PROCESSING_MS);
   }
 
   async function download() {
@@ -124,6 +137,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
 
       {success && <SuccessModal onClose={() => setSuccess(false)} />}
       {sampleOpen && <SampleModal image={sampleImg} onClose={() => setSampleOpen(false)} />}
+      {cropSource && <PhotoCropper image={cropSource} onCancel={() => setCropSource(null)} onApply={commitPhoto} />}
     </main>
   );
 }
