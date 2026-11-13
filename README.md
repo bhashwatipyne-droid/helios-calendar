@@ -37,7 +37,11 @@ Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha 
 
 - **Distributor check** — `app/api/login/route.ts` accepts any correctly formatted ARN/mobile (see `TODO`).
 - **Background removal** — the "Processing" step is a timed placeholder (`components/CalendarScreen.tsx`).
-- **Print dispatch** — the final calendar is only downloaded; uploading it for the printed copy is a `TODO`.
+
+## Privacy
+
+Photos never leave the user's device: the photo is read, previewed and drawn into the PNG entirely in the browser.
+Nothing is uploaded or stored on the server. The only data sent to the server is the ARN/mobile number at login.
 
 ## Project structure
 

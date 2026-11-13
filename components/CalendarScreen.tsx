@@ -62,7 +62,6 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      // TODO: upload the final calendar to the backend so the printed copy can be dispatched.
       setSuccess(true);
     } catch {
       setError('Something went wrong while creating your calendar. Please try again.');

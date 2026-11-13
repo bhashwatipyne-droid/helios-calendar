@@ -31,9 +31,7 @@ export function SuccessModal({ onClose }: { onClose: () => void }) {
         <p>
           Your Calendar personalization has been done.
           <br />
-          Digital copy has been downloaded on your system.
-          <br />
-          The personalized calendar will be on its way to you shortly.
+          Your calendar has been downloaded on your system.
         </p>
         <svg className="check" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
           <circle cx="60" cy="60" r="56" fill="#22A63A" />
