@@ -30,6 +30,8 @@ npm run dev
 | --- | --- |
 | `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Google reCAPTCHA v2 (checkbox) site key |
 | `RECAPTCHA_SECRET_KEY` | reCAPTCHA secret, verified in `/api/login` |
+| `NEXT_PUBLIC_UPLOAD_URL` | URL of the deployed Cloudflare Worker (`worker/`) |
+| `UPLOAD_SECRET` | Shared secret used to sign upload tokens; same value as the Worker secret |
 
 Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha check is done — fine for testing, **not for production**.
 
@@ -40,8 +42,8 @@ Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha 
 
 ## Privacy
 
-Photos never leave the user's device: the photo is read, previewed and drawn into the PNG entirely in the browser.
-Nothing is uploaded or stored on the server. The only data sent to the server is the ARN/mobile number at login.
+The user's **original photo never leaves their device** — it is read, cropped, previewed and drawn into the PNG in the browser.
+After the calendar is generated, only the **finished calendar PNG** is saved to Cloudflare R2 (one per distributor, latest overwrites) via the Worker in `worker/` — see `worker/README.md`. The ARN/mobile is also sent at login.
 
 ## Project structure
 

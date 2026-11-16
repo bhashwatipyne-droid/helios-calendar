@@ -59,6 +59,24 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
     }, PROCESSING_MS);
   }
 
+  /** Stores only the finished calendar PNG (never the original photo). Silent on failure. */
+  async function saveFinalCalendar(blob: Blob) {
+    const base = process.env.NEXT_PUBLIC_UPLOAD_URL;
+    if (!base) return;
+    try {
+      const t = await fetch('/api/upload-token', { method: 'POST' });
+      if (!t.ok) return;
+      const { token } = (await t.json()) as { token: string };
+      await fetch(`${base}/calendar/${YEAR}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/png' },
+        body: blob,
+      });
+    } catch {
+      /* the user already has their download */
+    }
+  }
+
   async function download() {
     if (!imgRef.current || busy) return;
     setBusy(true);
@@ -76,6 +94,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setSuccess(true);
+      void saveFinalCalendar(blob); // best-effort; never blocks the download
     } catch {
       setError('Something went wrong while creating your calendar. Please try again.');
     } finally {
