@@ -9,20 +9,18 @@ const BATCH = 50;
 const mb = (n: number) => `${(n / 1048576).toFixed(1)} MB`;
 
 export default function AdminClient() {
-  const [state, setState] = useState<'loading' | 'login' | 'ready'>('loading');
+  const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [year, setYear] = useState(0);
-  const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState('');
   const [q, setQ] = useState('');
 
   const load = useCallback(async () => {
     const r = await fetch('/api/admin/list');
-    if (r.status === 401) return setState('login');
     if (!r.ok) {
       setMsg((await r.json().catch(() => ({}))).error ?? 'Could not load the list.');
-      return setState('login');
+      return setState('error');
     }
     const d = (await r.json()) as { year: number; rows: AdminRow[] };
     setRows(d.rows);
@@ -33,21 +31,6 @@ export default function AdminClient() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function login(e: React.FormEvent) {
-    e.preventDefault();
-    setMsg('');
-    const r = await fetch('/api/admin/login', { method: 'POST', body: JSON.stringify({ password }) });
-    if (!r.ok) return setMsg((await r.json().catch(() => ({}))).error ?? 'Login failed.');
-    setPassword('');
-    await load();
-  }
-
-  async function logout() {
-    await fetch('/api/admin/login', { method: 'DELETE' });
-    setRows([]);
-    setState('login');
-  }
 
   async function sign(ids: string[]) {
     const r = await fetch('/api/admin/sign', { method: 'POST', body: JSON.stringify({ ids }) });
@@ -87,24 +70,12 @@ export default function AdminClient() {
 
   if (state === 'loading') return <main style={wrap}>Loading…</main>;
 
-  if (state === 'login') {
-    return (
-      <main style={wrap}>
-        <h1>Admin</h1>
-        <form onSubmit={login} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Admin password" autoFocus style={{ padding: 10, flex: '1 1 220px' }} />
-          <button className="btn" type="submit">Sign in</button>
-        </form>
-        {msg && <p role="alert">{msg}</p>}
-      </main>
-    );
-  }
+  if (state === 'error') return <main style={wrap}><h1>Admin</h1><p role="alert">{msg}</p></main>;
 
   return (
     <main style={wrap}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <h1>Helios {year} calendars</h1>
-        <button type="button" className="linkbtn" onClick={logout}>Sign out</button>
       </div>
       <p>
         {rows.length} calendars · {mb(totalMb)} stored

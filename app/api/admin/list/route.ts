@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/admin';
 import { YEAR } from '@/lib/calendar';
 import { listAll, r2 } from '@/lib/r2';
 
 export type AdminRow = { id: string; updated: string; size: number };
 
 export async function GET() {
-  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!r2()) return NextResponse.json({ error: 'Storage not configured.' }, { status: 503 });
 
   const rows: AdminRow[] = [];

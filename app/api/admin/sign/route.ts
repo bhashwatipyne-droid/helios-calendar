@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/admin';
 import { YEAR } from '@/lib/calendar';
 import { presign } from '@/lib/r2';
 
 /** Presigned GET URLs (1 hour) for the given distributor ids. Body: { ids: string[] } */
 export async function POST(req: Request) {
-  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { ids } = (await req.json().catch(() => ({}))) as { ids?: string[] };
   if (!Array.isArray(ids) || ids.length > 100) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 });
