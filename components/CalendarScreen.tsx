@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import CalendarArt from './CalendarArt';
 import { SuccessModal, SampleModal } from './Modals';
 import PhotoCropper, { CROP_RATIO } from './PhotoCropper';
-import { YEAR, drawCalendar, loadImage } from '@/lib/calendar';
+import { YEAR, drawCalendar, loadImage, preloadCalendarAssets } from '@/lib/calendar';
 import { canvasToJpeg, saveBlob, storeFinalCalendar } from '@/lib/export';
 
 type Format = 'jpg';
@@ -14,7 +14,7 @@ const FORMATS: { id: Format; title: string; sub: string }[] = [
 ];
 
 const MAX_BYTES = 15 * 1024 * 1024;
-const PROCESSING_MS = 1800;
+const PROCESSING_MS = 500;
 const ASPECT_TOLERANCE = 0.02; // photos within 2% of 5:4 skip the crop step
 
 export default function CalendarScreen({ userLabel }: { userLabel: string }) {
@@ -33,6 +33,10 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    void preloadCalendarAssets(); // warm the fonts/artwork while the user picks a photo
+  }, []);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);

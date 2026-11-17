@@ -80,6 +80,28 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
 
 export { loadImage };
 
+let assetsPromise: Promise<{ doodles: HTMLImageElement | null; frame: HTMLImageElement | null; logo: HTMLImageElement | null }> | null = null;
+
+/**
+ * Fetches + decodes the fonts and artwork once. Called when the calendar page opens, so by the time the user
+ * clicks Download nothing is left to fetch — even on a slow connection. A failed load is retried next time.
+ */
+export function preloadCalendarAssets() {
+  if (!assetsPromise) {
+    assetsPromise = (async () => {
+      try {
+        await Promise.all(['500 20px Poppins', '400 20px Poppins'].map((f) => document.fonts.load(f)));
+      } catch {
+        /* fonts fall back */
+      }
+      const [doodles, frame, logo] = await Promise.all([loadImage(ASSETS.doodles), loadImage(ASSETS.frame), loadImage(ASSETS.logo)]);
+      if (!doodles || !frame || !logo) assetsPromise = null;
+      return { doodles, frame, logo };
+    })();
+  }
+  return assetsPromise;
+}
+
 /** Draws the full calendar at EXPORT_DPI and returns the canvas. */
 export async function drawCalendar(photo: HTMLImageElement | null, opts: { sample?: boolean } = {}): Promise<HTMLCanvasElement> {
   const u = EXPORT_DPI / 72;
@@ -89,12 +111,7 @@ export async function drawCalendar(photo: HTMLImageElement | null, opts: { sampl
   const x = canvas.getContext('2d');
   if (!x) throw new Error('Canvas not supported');
 
-  try {
-    await Promise.all(['400 20px Poppins', '500 20px Poppins'].map((f) => document.fonts.load(f)));
-  } catch {
-    /* fonts fall back */
-  }
-  const [doodles, frame, logo] = await Promise.all([loadImage(ASSETS.doodles), loadImage(ASSETS.frame), loadImage(ASSETS.logo)]);
+  const { doodles, frame, logo } = await preloadCalendarAssets();
 
   x.scale(u, u);
   x.fillStyle = COLORS.cream;
