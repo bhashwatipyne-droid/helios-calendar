@@ -68,7 +68,7 @@ export default function LoginForm() {
         </div>
         <Recaptcha onChange={setCaptcha} resetSignal={resetSignal} />
         <button className="lbtn" type="submit" disabled={!id.trim() || !captcha || busy}>
-          {busy ? 'Logging in…' : 'Log in'}
+          {busy ? 'Please wait…' : 'Get started'}
         </button>
       </div>
     </form>
