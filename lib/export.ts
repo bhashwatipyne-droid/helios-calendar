@@ -12,7 +12,7 @@ export async function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 /**
- * Print PDF: one page at the exact trim + bleed size (7 x 9 in + 0.1575 in bleed), full-resolution image inside.
+ * Print PDF: one page at trim + bleed size (7 x 9 in + 0.1575 in bleed) with TrimBox/BleedBox set, full-resolution image inside.
  * The image is embedded as near-lossless JPEG (q0.95) — fast and light enough for phones; the PNG stays lossless.
  */
 export async function canvasToPdf(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -31,6 +31,10 @@ export async function canvasToPdf(canvas: HTMLCanvasElement): Promise<Blob> {
   const img = await pdf.embedJpg(new Uint8Array(await jpg.arrayBuffer()));
   const page = pdf.addPage([PAGE_W, PAGE_H]);
   page.drawImage(img, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
+  // Print boxes: the page is trim (7 x 9 in) + 0.1575 in bleed on every side, so printers get proper TrimBox/BleedBox.
+  const BLEED = 11.34; // pt
+  page.setBleedBox(0, 0, PAGE_W, PAGE_H);
+  page.setTrimBox(BLEED, BLEED, PAGE_W - 2 * BLEED, PAGE_H - 2 * BLEED);
   pdf.setTitle('Helios Mutual Fund — Personalised Calendar');
   const bytes = await pdf.save();
   return new Blob([bytes as BlobPart], { type: 'application/pdf' });
