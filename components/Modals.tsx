@@ -21,7 +21,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function SuccessModal({ onClose, onTryAgain, format }: { onClose: () => void; onTryAgain: () => void; format: 'PNG' | 'PDF' }) {
+export function SuccessModal({ onClose, onTryAgain, format }: { onClose: () => void; onTryAgain: () => void; format: string }) {
   useEscape(onClose);
   return (
     <div className="overlay" onClick={onClose}>

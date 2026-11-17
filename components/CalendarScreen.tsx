@@ -6,12 +6,11 @@ import CalendarArt from './CalendarArt';
 import { SuccessModal, SampleModal } from './Modals';
 import PhotoCropper, { CROP_RATIO } from './PhotoCropper';
 import { YEAR, drawCalendar, loadImage } from '@/lib/calendar';
-import { canvasToPng, canvasToPdf, saveBlob, storeFinalCalendar } from '@/lib/export';
+import { canvasToJpeg, saveBlob, storeFinalCalendar } from '@/lib/export';
 
-type Format = 'png' | 'pdf';
+type Format = 'jpg';
 const FORMATS: { id: Format; title: string; sub: string }[] = [
-  { id: 'png', title: 'PNG image', sub: 'High-resolution, 2195 × 2795 px — for sharing' },
-  { id: 'pdf', title: 'PDF document', sub: '7.3 × 9.3 in page at 300 dpi — for printing' },
+  { id: 'jpg', title: 'JPEG image', sub: 'High-resolution, 2195 × 2796 px — print quality' },
 ];
 
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -30,7 +29,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const [sampleOpen, setSampleOpen] = useState(false);
   const [sampleImg, setSampleImg] = useState<string | null>(null);
   const [cropSource, setCropSource] = useState<HTMLImageElement | null>(null);
-  const [format, setFormat] = useState<Format>('png');
+  const [format, setFormat] = useState<Format>('jpg');
   const [menuOpen, setMenuOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
@@ -97,11 +96,10 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
     setError('');
     try {
       const canvas = await drawCalendar(imgRef.current);
-      const png = await canvasToPng(canvas);
-      const pdf = await canvasToPdf(canvas);
-      saveBlob(format === 'pdf' ? pdf : png, `helios-calendar-${YEAR}.${format}`);
+      const jpeg = await canvasToJpeg(canvas);
+      saveBlob(jpeg, `helios-calendar-${YEAR}.jpg`);
       setSuccess(true);
-      void storeFinalCalendar(png, pdf); // best-effort; never blocks the download
+      void storeFinalCalendar(jpeg); // best-effort; never blocks the download
     } catch {
       setError('Something went wrong while creating your calendar. Please try again.');
     } finally {
@@ -175,9 +173,10 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
             </button>
           )}
           <div className="split" ref={splitRef}>
-            <button className="btn" type="button" disabled={!photo || busy || processing} onClick={download}>
-              {busy ? 'Preparing…' : `Download ${format.toUpperCase()}`}
+            <button className="btn" type="button" style={FORMATS.length === 1 ? { borderRadius: 10 } : undefined} disabled={!photo || busy || processing} onClick={download}>
+              {busy ? 'Preparing…' : 'Download JPEG'}
             </button>
+            {FORMATS.length > 1 && (
             <button
               className="caret"
               type="button"
@@ -191,7 +190,8 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
-            {menuOpen && (
+            )}
+            {FORMATS.length > 1 && menuOpen && (
               <div className="menu" role="menu" aria-label="File type">
                 {FORMATS.map((f) => (
                   <button
@@ -223,7 +223,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
         </div>
       </div>
 
-      {success && <SuccessModal format={format === 'pdf' ? 'PDF' : 'PNG'} onClose={() => setSuccess(false)} onTryAgain={pickAnotherPhoto} />}
+      {success && <SuccessModal format="JPEG" onClose={() => setSuccess(false)} onTryAgain={pickAnotherPhoto} />}
       {sampleOpen && <SampleModal image={sampleImg} onClose={() => setSampleOpen(false)} />}
       {cropSource && <PhotoCropper image={cropSource} onCancel={() => setCropSource(null)} onApply={commitPhoto} />}
     </main>
