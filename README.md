@@ -43,7 +43,7 @@ Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha 
 ## Privacy
 
 The user's **original photo never leaves their device** — it is read, cropped, previewed and drawn into the PNG in the browser.
-After the calendar is generated, only the **finished calendar PNG** is saved to Supabase Storage (private bucket `helios-calendars`, `calendars/<year>/<ARN or mobile>.png`, latest overwrites) via the `helios-upload-url` Edge Function. The ARN/mobile is also sent at login.
+After the calendar is generated, only the **finished calendar PNG** is saved to Supabase Storage (private bucket `helios-calendars`, `calendars/<year>/<ARN or mobile>.jpg` — a compressed copy, hard-capped at 1 MB, latest overwrites so re-downloads never add files) via the `helios-upload-url` Edge Function. The ARN/mobile is also sent at login.
 
 ## Project structure
 

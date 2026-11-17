@@ -59,12 +59,44 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
     }, PROCESSING_MS);
   }
 
-  /** Stores only the finished calendar PNG (never the original photo) in Supabase Storage. Silent on failure. */
-  async function saveFinalCalendar(blob: Blob) {
+  /**
+   * Compressed copy for storage (the user's own download stays the full-quality PNG).
+   * Always <= STORAGE_MAX_BYTES: tries lower JPEG quality, then a smaller size.
+   */
+  async function compressForStorage(src: HTMLCanvasElement): Promise<Blob | null> {
+    const STORAGE_MAX_BYTES = 900 * 1024;
+    const encode = (c: HTMLCanvasElement, q: number) =>
+      new Promise<Blob | null>((res) => c.toBlob(res, 'image/jpeg', q));
+    const flatten = (scale: number) => {
+      const c = document.createElement('canvas');
+      c.width = Math.round(src.width * scale);
+      c.height = Math.round(src.height * scale);
+      const x = c.getContext('2d');
+      if (!x) return null;
+      x.fillStyle = '#fff'; // JPEG has no transparency
+      x.fillRect(0, 0, c.width, c.height);
+      x.drawImage(src, 0, 0, c.width, c.height);
+      return c;
+    };
+    for (const [scale, qualities] of [[1, [0.75, 0.6, 0.5]], [0.7, [0.6, 0.45]]] as const) {
+      const c = flatten(scale);
+      if (!c) return null;
+      for (const q of qualities) {
+        const b = await encode(c, q);
+        if (b && b.size <= STORAGE_MAX_BYTES) return b;
+      }
+    }
+    return null;
+  }
+
+  /** Stores only a compressed copy of the finished calendar (never the original photo). One file per user — re-downloads replace it. */
+  async function saveFinalCalendar(canvas: HTMLCanvasElement) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) return;
     try {
+      const blob = await compressForStorage(canvas);
+      if (!blob) return;
       const t = await fetch('/api/upload-token', { method: 'POST' });
       if (!t.ok) return;
       const { token } = (await t.json()) as { token: string };
@@ -78,7 +110,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       const { createClient } = await import('@supabase/supabase-js');
       await createClient(url, key).storage
         .from('helios-calendars')
-        .uploadToSignedUrl(path, uploadToken, blob, { contentType: 'image/png' });
+        .uploadToSignedUrl(path, uploadToken, blob, { contentType: 'image/jpeg' });
     } catch {
       /* the user already has their download */
     }
@@ -101,7 +133,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setSuccess(true);
-      void saveFinalCalendar(blob); // best-effort; never blocks the download
+      void saveFinalCalendar(canvas); // best-effort; never blocks the download
     } catch {
       setError('Something went wrong while creating your calendar. Please try again.');
     } finally {
