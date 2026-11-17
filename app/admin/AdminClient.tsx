@@ -96,12 +96,12 @@ export default function AdminClient() {
       {msg && <p role="alert">{msg}</p>}
 
       <h2>All distributors</h2>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ARN / mobile" style={{ padding: 10, width: '100%', maxWidth: 320, marginBottom: 8 }} />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ARN / employee email" style={{ padding: 10, width: '100%', maxWidth: 320, marginBottom: 8 }} />
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left' }}>
-              <th>ARN / mobile</th><th>Last saved</th><th>JPEG</th>
+              <th>ARN / employee</th><th>Last saved</th><th>JPEG</th>
             </tr>
           </thead>
           <tbody>

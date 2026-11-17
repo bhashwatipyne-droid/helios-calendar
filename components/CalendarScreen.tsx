@@ -17,7 +17,7 @@ const MAX_BYTES = 15 * 1024 * 1024;
 const PROCESSING_MS = 500;
 const ASPECT_TOLERANCE = 0.02; // photos within 2% of 5:4 skip the crop step
 
-export default function CalendarScreen({ userLabel }: { userLabel: string }) {
+export default function CalendarScreen({ userLabel, loginPath = '/' }: { userLabel: string; loginPath?: string }) {
   const router = useRouter();
   const imgRef = useRef<HTMLImageElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,7 +145,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
 
   async function logout() {
     await fetch('/api/login', { method: 'DELETE' }).catch(() => {});
-    router.replace('/');
+    router.replace(loginPath);
     router.refresh();
   }
 

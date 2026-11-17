@@ -37,6 +37,12 @@ a:hover { color: #9A4212; }
 .field::placeholder { color: #6F6F6F; }
 .field:focus { outline: 2px solid var(--login-orange); outline-offset: 1px; border-color: var(--login-orange); }
 .field.bad { border-color: #B03223; }
+.field-prefixed { display: flex; align-items: center; width: 100%; min-height: 44px; border: 1px solid #8A8A8A; border-radius: 6px; background: #fff; overflow: hidden; }
+.field-prefixed:focus-within { outline: 2px solid var(--login-orange); outline-offset: 1px; border-color: var(--login-orange); }
+.field-prefixed.bad { border-color: #B03223; }
+.field-prefixed span { align-self: stretch; display: flex; align-items: center; padding: 0 10px 0 12px; background: #F2F2F2; border-right: 1px solid #D3D3D3; font: 400 16px Lato, sans-serif; color: var(--ink); }
+.field-prefixed input { flex: 1; min-width: 0; min-height: 42px; padding: 0 12px; border: 0; outline: 0; font: 400 16px Lato, sans-serif; color: var(--ink); background: transparent; }
+.field-prefixed input::placeholder { color: #6F6F6F; }
 .cap-fallback { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 76px; padding: 0 12px; border: 1px solid #D3D3D3; border-radius: 3px; background: #F9F9F9; box-shadow: 0 0 4px rgba(0,0,0,.08); }
 .cap-fallback label { display: flex; align-items: center; gap: 12px; min-height: 44px; font: 400 14px Roboto, Arial, sans-serif; color: #222; cursor: pointer; }
 .cap-fallback input { width: 26px; height: 26px; margin: 0; accent-color: #2E7D32; cursor: pointer; }

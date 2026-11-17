@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SESSION_COOKIE, normaliseLoginId } from '@/lib/auth';
+import { SESSION_COOKIE, normaliseArn, normaliseEmployeeEmail, type LoginKind } from '@/lib/auth';
 
 async function verifyRecaptcha(token: string | undefined, ip: string | null): Promise<boolean> {
   const secret = process.env.RECAPTCHA_SECRET_KEY;
@@ -17,16 +17,20 @@ async function verifyRecaptcha(token: string | undefined, ip: string | null): Pr
 }
 
 export async function POST(req: Request) {
-  let payload: { id?: string; captcha?: string } = {};
+  let payload: { id?: string; captcha?: string; kind?: LoginKind } = {};
   try {
     payload = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 
-  const id = normaliseLoginId(payload.id ?? '');
+  const employee = payload.kind === 'employee';
+  const id = employee ? normaliseEmployeeEmail(payload.id ?? '') : normaliseArn(payload.id ?? '');
   if (!id) {
-    return NextResponse.json({ error: 'Enter a valid ARN (e.g. ARN-12345) or 10-digit mobile number.' }, { status: 400 });
+    return NextResponse.json(
+      { error: employee ? 'Enter your Helios corporate email address.' : 'Enter a valid 6-digit ARN number.' },
+      { status: 400 },
+    );
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;

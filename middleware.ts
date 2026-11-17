@@ -8,10 +8,10 @@ export function middleware(req: NextRequest) {
   if (pathname.startsWith('/calendar') && !loggedIn) {
     return NextResponse.redirect(new URL('/', req.url));
   }
-  if (pathname === '/' && loggedIn) {
+  if ((pathname === '/' || pathname === '/employee') && loggedIn) {
     return NextResponse.redirect(new URL('/calendar', req.url));
   }
   return NextResponse.next();
 }
 
-export const config = { matcher: ['/', '/calendar/:path*'] };
+export const config = { matcher: ['/', '/employee', '/calendar/:path*'] };
