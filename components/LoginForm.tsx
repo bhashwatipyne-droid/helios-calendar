@@ -42,7 +42,7 @@ export default function LoginForm() {
     <form className="lp-card" onSubmit={submit} noValidate>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="lp-logo" src="/logo.png" alt="Helios Mutual Fund — Har term ke liye" />
-      <h1 className="lp-title">Log in</h1>
+      <h1 className="lp-title">Create your personalised calendar</h1>
       <div className="lp-fields">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <label htmlFor="arn" className="sr-only">ARN or mobile number</label>

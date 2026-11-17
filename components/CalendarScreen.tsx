@@ -8,6 +8,12 @@ import PhotoCropper, { CROP_RATIO } from './PhotoCropper';
 import { YEAR, drawCalendar, loadImage } from '@/lib/calendar';
 import { canvasToPng, canvasToPdf, saveBlob, storeFinalCalendar } from '@/lib/export';
 
+type Format = 'png' | 'pdf';
+const FORMATS: { id: Format; title: string; sub: string }[] = [
+  { id: 'png', title: 'PNG image', sub: 'High-resolution, 2195 × 2795 px — for sharing' },
+  { id: 'pdf', title: 'PDF document', sub: '7.3 × 9.3 in page at 300 dpi — for printing' },
+];
+
 const MAX_BYTES = 15 * 1024 * 1024;
 const PROCESSING_MS = 1800;
 const ASPECT_TOLERANCE = 0.02; // photos within 2% of 5:4 skip the crop step
@@ -24,13 +30,37 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const [sampleOpen, setSampleOpen] = useState(false);
   const [sampleImg, setSampleImg] = useState<string | null>(null);
   const [cropSource, setCropSource] = useState<HTMLImageElement | null>(null);
+  const [format, setFormat] = useState<Format>('png');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const splitRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
+  // Close the file-type menu on outside click / Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (splitRef.current && !splitRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenuOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
+
+  function pickAnotherPhoto() {
+    setSuccess(false);
+    fileInput.current?.click();
+  }
+
   function handleFile(f: File | undefined) {
-    if (!f || photo || processing) return;
+    if (!f || processing) return; // a new photo replaces the current one
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return setError('Please choose a JPG, PNG or WebP photo.');
     if (f.size > MAX_BYTES) return setError('That photo is over 15 MB. Please choose a smaller one.');
     const reader = new FileReader();
@@ -60,8 +90,9 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
     }, PROCESSING_MS);
   }
 
-  async function download(format: 'png' | 'pdf' = 'png') {
+  async function download() {
     if (!imgRef.current || busy) return;
+    setMenuOpen(false);
     setBusy(true);
     setError('');
     try {
@@ -123,17 +154,76 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
           </p>
         )}
 
-        <div className="cp-dl">
-          <button className="btn" type="button" disabled={!photo || busy} onClick={() => download('png')}>
-            {busy ? 'Preparing…' : 'Download PNG'}
-          </button>
-          <button className="btn" type="button" disabled={!photo || busy} onClick={() => download('pdf')}>
-            {busy ? 'Preparing…' : 'Download PDF'}
-          </button>
+        <input
+          ref={fileInput}
+          className="sr-only"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            handleFile(f);
+          }}
+        />
+
+        <div className="cp-actions">
+          {photo && (
+            <button className="btn ghost" type="button" onClick={pickAnotherPhoto} disabled={busy || processing}>
+              Change photo
+            </button>
+          )}
+          <div className="split" ref={splitRef}>
+            <button className="btn" type="button" disabled={!photo || busy || processing} onClick={download}>
+              {busy ? 'Preparing…' : `Download ${format.toUpperCase()}`}
+            </button>
+            <button
+              className="caret"
+              type="button"
+              aria-label="Choose file type"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              disabled={!photo || busy || processing}
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {menuOpen && (
+              <div className="menu" role="menu" aria-label="File type">
+                {FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={format === f.id}
+                    onClick={() => {
+                      setFormat(f.id);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <span className="tick" aria-hidden="true">
+                      {format === f.id && (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12l5 5 9-10" />
+                        </svg>
+                      )}
+                    </span>
+                    <span>
+                      <span className="mt">{f.title}</span>
+                      <span className="ms">{f.sub}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {success && <SuccessModal onClose={() => setSuccess(false)} />}
+      {success && <SuccessModal format={format === 'pdf' ? 'PDF' : 'PNG'} onClose={() => setSuccess(false)} onTryAgain={pickAnotherPhoto} />}
       {sampleOpen && <SampleModal image={sampleImg} onClose={() => setSampleOpen(false)} />}
       {cropSource && <PhotoCropper image={cropSource} onCancel={() => setCropSource(null)} onApply={commitPhoto} />}
     </main>

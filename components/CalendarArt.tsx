@@ -31,11 +31,6 @@ export default function CalendarArt({ photo, processing, onFile }: Props) {
                 <br />
                 recommended for best results
               </span>
-              <span className="note2">
-                Please note: Photo once uploaded, cannot
-                <br />
-                be changed.
-              </span>
               <input
                 className="sr-only"
                 type="file"
@@ -48,7 +43,29 @@ export default function CalendarArt({ photo, processing, onFile }: Props) {
               />
             </label>
           )}
-          {photo && <img src={photo} alt="Your uploaded photo" />}
+          {photo && (
+            <label className="filled" title="Change photo">
+              <img src={photo} alt="Your uploaded photo" />
+              <span className="change-chip">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M4 7h3l2-3h6l2 3h3v12H4z" />
+                  <circle cx="12" cy="13" r="3.5" />
+                </svg>
+                Change photo
+              </span>
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label="Change photo"
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  onFile(f);
+                }}
+              />
+            </label>
+          )}
           {processing && (
             <div className="proc" role="status">
               <div className="spin" />

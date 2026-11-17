@@ -21,7 +21,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function SuccessModal({ onClose }: { onClose: () => void }) {
+export function SuccessModal({ onClose, onTryAgain, format }: { onClose: () => void; onTryAgain: () => void; format: 'PNG' | 'PDF' }) {
   useEscape(onClose);
   return (
     <div className="overlay" onClick={onClose}>
@@ -31,12 +31,15 @@ export function SuccessModal({ onClose }: { onClose: () => void }) {
         <p>
           Your Calendar personalization has been done.
           <br />
-          Your calendar has been downloaded on your system.
+          Your calendar ({format}) has been downloaded on your system.
         </p>
         <svg className="check" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
           <circle cx="60" cy="60" r="56" fill="#22A63A" />
           <path d="M36 62l16 16 32-34" fill="none" stroke="#FFFFFF" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
+        <button type="button" className="btn ghost" style={{ marginTop: 20 }} onClick={onTryAgain}>
+          Try with another photo
+        </button>
       </div>
     </div>
   );
