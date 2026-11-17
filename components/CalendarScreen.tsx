@@ -59,19 +59,26 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
     }, PROCESSING_MS);
   }
 
-  /** Stores only the finished calendar PNG (never the original photo). Silent on failure. */
+  /** Stores only the finished calendar PNG (never the original photo) in Supabase Storage. Silent on failure. */
   async function saveFinalCalendar(blob: Blob) {
-    const base = process.env.NEXT_PUBLIC_UPLOAD_URL;
-    if (!base) return;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return;
     try {
       const t = await fetch('/api/upload-token', { method: 'POST' });
       if (!t.ok) return;
       const { token } = (await t.json()) as { token: string };
-      await fetch(`${base}/calendar/${YEAR}`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/png' },
-        body: blob,
+      const r = await fetch(`${url}/functions/v1/helios-upload-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, year: YEAR }),
       });
+      if (!r.ok) return;
+      const { path, token: uploadToken } = (await r.json()) as { path: string; token: string };
+      const { createClient } = await import('@supabase/supabase-js');
+      await createClient(url, key).storage
+        .from('helios-calendars')
+        .uploadToSignedUrl(path, uploadToken, blob, { contentType: 'image/png' });
     } catch {
       /* the user already has their download */
     }

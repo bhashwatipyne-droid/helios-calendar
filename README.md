@@ -30,8 +30,8 @@ npm run dev
 | --- | --- |
 | `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Google reCAPTCHA v2 (checkbox) site key |
 | `RECAPTCHA_SECRET_KEY` | reCAPTCHA secret, verified in `/api/login` |
-| `NEXT_PUBLIC_UPLOAD_URL` | URL of the deployed Cloudflare Worker (`worker/`) |
-| `UPLOAD_SECRET` | Shared secret used to sign upload tokens; same value as the Worker secret |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project URL and publishable key |
+| `UPLOAD_SECRET` | Signs upload tokens; same value must be set as an Edge Function secret in Supabase |
 
 Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha check is done — fine for testing, **not for production**.
 
@@ -43,7 +43,7 @@ Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha 
 ## Privacy
 
 The user's **original photo never leaves their device** — it is read, cropped, previewed and drawn into the PNG in the browser.
-After the calendar is generated, only the **finished calendar PNG** is saved to Cloudflare R2 (one per distributor, latest overwrites) via the Worker in `worker/` — see `worker/README.md`. The ARN/mobile is also sent at login.
+After the calendar is generated, only the **finished calendar PNG** is saved to Supabase Storage (private bucket `helios-calendars`, `calendars/<year>/<ARN or mobile>.png`, latest overwrites) via the `helios-upload-url` Edge Function. The ARN/mobile is also sent at login.
 
 ## Project structure
 
