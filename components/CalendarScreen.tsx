@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CalendarArt from './CalendarArt';
-import { SuccessModal, SampleModal } from './Modals';
+import { SuccessModal, SampleModal, ReplaceModal } from './Modals';
 import PhotoCropper, { CROP_RATIO } from './PhotoCropper';
 import { YEAR, drawCalendar, loadImage, preloadCalendarAssets } from '@/lib/calendar';
 import { canvasToJpeg, saveBlob, storeFinalCalendar } from '@/lib/export';
@@ -31,8 +31,17 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const [cropSource, setCropSource] = useState<HTMLImageElement | null>(null);
   const [format, setFormat] = useState<Format>('jpg');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [stored, setStored] = useState(false); // this ARN/mobile already has a calendar saved
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/calendar-status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { stored?: boolean } | null) => d?.stored && setStored(true))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     void preloadCalendarAssets(); // warm the fonts/artwork while the user picks a photo
@@ -102,13 +111,23 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       const canvas = await drawCalendar(imgRef.current);
       const jpeg = await canvasToJpeg(canvas);
       saveBlob(jpeg, `helios-calendar-${YEAR}.jpg`);
-      setSuccess(true);
-      void storeFinalCalendar(jpeg); // best-effort; never blocks the download
+      if (await storeFinalCalendar(jpeg)) {
+        setStored(true);
+        setSuccess(true);
+      } else {
+        setError('Your calendar was downloaded, but we could not save it for printing. Please check your internet connection and click Download again.');
+      }
     } catch {
       setError('Something went wrong while creating your calendar. Please try again.');
     } finally {
       setBusy(false);
     }
+  }
+
+  /** First calendar saves straight away; a second one asks first, because it replaces the saved one. */
+  function requestDownload() {
+    if (stored) setConfirmOpen(true);
+    else void download();
   }
 
   async function openSample() {
@@ -177,7 +196,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
             </button>
           )}
           <div className="split" ref={splitRef}>
-            <button className="btn" type="button" style={FORMATS.length === 1 ? { borderRadius: 10 } : undefined} disabled={!photo || busy || processing} onClick={download}>
+            <button className="btn" type="button" style={FORMATS.length === 1 ? { borderRadius: 10 } : undefined} disabled={!photo || busy || processing} onClick={requestDownload}>
               {busy ? 'Preparing…' : 'Download JPEG'}
             </button>
             {FORMATS.length > 1 && (
@@ -227,7 +246,16 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
         </div>
       </div>
 
-      {success && <SuccessModal format="JPEG" onClose={() => setSuccess(false)} onTryAgain={pickAnotherPhoto} />}
+      {success && <SuccessModal format="JPEG" onClose={() => setSuccess(false)} />}
+      {confirmOpen && (
+        <ReplaceModal
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={() => {
+            setConfirmOpen(false);
+            void download();
+          }}
+        />
+      )}
       {sampleOpen && <SampleModal image={sampleImg} onClose={() => setSampleOpen(false)} />}
       {cropSource && <PhotoCropper image={cropSource} onCancel={() => setCropSource(null)} onApply={commitPhoto} />}
     </main>

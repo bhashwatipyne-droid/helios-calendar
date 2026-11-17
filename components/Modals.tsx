@@ -21,7 +21,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function SuccessModal({ onClose, onTryAgain, format }: { onClose: () => void; onTryAgain: () => void; format: string }) {
+export function SuccessModal({ onClose, format }: { onClose: () => void; format: string }) {
   useEscape(onClose);
   return (
     <div className="overlay" onClick={onClose}>
@@ -37,9 +37,31 @@ export function SuccessModal({ onClose, onTryAgain, format }: { onClose: () => v
           <circle cx="60" cy="60" r="56" fill="#22A63A" />
           <path d="M36 62l16 16 32-34" fill="none" stroke="#FFFFFF" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <button type="button" className="btn ghost" style={{ marginTop: 20 }} onClick={onTryAgain}>
-          Try with another photo
-        </button>
+      </div>
+    </div>
+  );
+}
+
+export function ReplaceModal({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  useEscape(onCancel);
+  return (
+    <div className="overlay" onClick={onCancel}>
+      <div className="dialog ok" role="dialog" aria-modal="true" aria-labelledby="replace-title" onClick={(e) => e.stopPropagation()}>
+        <CloseButton onClose={onCancel} />
+        <h2 id="replace-title">Calendar already saved</h2>
+        <p>
+          We have already stored your response.
+          <br />
+          If you create it again, your previous response will not be printed as a calendar — only the latest one will be.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12, width: '100%' }}>
+          <button type="button" className="btn ghost" onClick={onCancel}>
+            Keep my saved calendar
+          </button>
+          <button type="button" className="btn" onClick={onConfirm}>
+            Create again
+          </button>
+        </div>
       </div>
     </div>
   );

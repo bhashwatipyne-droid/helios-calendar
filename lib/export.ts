@@ -32,15 +32,16 @@ export function saveBlob(blob: Blob, filename: string) {
 
 /**
  * Stores the finished calendar JPEG in Cloudflare R2 — never the user's original photo.
- * Fixed key per distributor => repeat downloads overwrite. Silent on failure: the user already has their file.
+ * Fixed key per distributor => a repeat overwrites. Returns true only when the file is really saved.
  */
-export async function storeFinalCalendar(jpeg: Blob): Promise<void> {
+export async function storeFinalCalendar(jpeg: Blob): Promise<boolean> {
   try {
     const r = await fetch('/api/upload-urls', { method: 'POST' });
-    if (!r.ok) return;
+    if (!r.ok) return false;
     const { jpg } = (await r.json()) as { jpg: string };
-    await fetch(jpg, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: jpeg });
+    const put = await fetch(jpg, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: jpeg });
+    return put.ok;
   } catch {
-    /* ignore */
+    return false;
   }
 }
