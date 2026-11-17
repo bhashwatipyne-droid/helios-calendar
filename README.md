@@ -30,6 +30,7 @@ npm run dev
 | --- | --- |
 | `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Google reCAPTCHA v2 (checkbox) site key |
 | `RECAPTCHA_SECRET_KEY` | reCAPTCHA secret, verified in `/api/login` |
+| `ADMIN_PASSWORD` | Password for `/admin` |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Cloudflare R2 credentials for presigned uploads |
 
 Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha check is done — fine for testing, **not for production**.
@@ -46,6 +47,11 @@ After the calendar is generated, only the **finished print files** are saved to 
 `calendars/<year>/<ARN or mobile>.png` (2195 × 2795 px, 300 dpi, lossless) and `.pdf` (526.68 × 670.68 pt, trim + bleed).
 One fixed key per distributor, so re-downloading overwrites the files instead of adding new ones.
 Uploads use short-lived presigned URLs issued by `/api/upload-urls` (needs the login cookie).
+
+### Admin / printer export
+
+`/admin` (password = `ADMIN_PASSWORD`) lists every stored calendar and downloads the PDFs (or single PNGs) in zip batches of 50.
+The R2 bucket's CORS rule must allow `PUT` and `GET` from the site's origins (`https://heliosamc.thefinpedia.com`, `https://helios-calendar-six.vercel.app`) with headers `*`.
 
 ## Project structure
 
