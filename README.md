@@ -1,6 +1,6 @@
-# Helios Mutual Fund — Personalised Calendar 2026
+# Helios Mutual Fund — Personalised Calendar 2027
 
-Next.js (App Router) site where distributors log in, upload a photo into the 2026 calendar and download a print-ready PNG.
+Next.js (App Router) site where distributors log in, upload a photo into the 2027 calendar and download a print-ready PNG.
 
 ## Flow
 

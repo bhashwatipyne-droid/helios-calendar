@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Helios Mutual Fund — Personalised Calendar 2026',
-  description: 'Personalise your Helios Mutual Fund 2026 calendar with your own photo.',
+  title: 'Helios Mutual Fund — Personalised Calendar 2027',
+  description: 'Personalise your Helios Mutual Fund 2027 calendar with your own photo.',
   icons: { icon: '/logo.png' },
 };
 
