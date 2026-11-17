@@ -30,8 +30,7 @@ npm run dev
 | --- | --- |
 | `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Google reCAPTCHA v2 (checkbox) site key |
 | `RECAPTCHA_SECRET_KEY` | reCAPTCHA secret, verified in `/api/login` |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project URL and publishable key |
-| `UPLOAD_SECRET` | Signs upload tokens; same value must be set as an Edge Function secret in Supabase |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Cloudflare R2 credentials for presigned uploads |
 
 Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha check is done — fine for testing, **not for production**.
 
@@ -40,10 +39,13 @@ Without these, a placeholder "I'm not a robot" checkbox is shown and no captcha 
 - **Distributor check** — `app/api/login/route.ts` accepts any correctly formatted ARN/mobile (see `TODO`).
 - **Background removal** — the "Processing" step is a timed placeholder (`components/CalendarScreen.tsx`).
 
-## Privacy
+## Privacy & storage
 
-The user's **original photo never leaves their device** — it is read, cropped, previewed and drawn into the PNG in the browser.
-After the calendar is generated, only the **finished calendar PNG** is saved to Supabase Storage (private bucket `helios-calendars`, `calendars/<year>/<ARN or mobile>.jpg` — a compressed copy, hard-capped at 1 MB, latest overwrites so re-downloads never add files) via the `helios-upload-url` Edge Function. The ARN/mobile is also sent at login.
+The user's **original photo never leaves their device** — it is read, cropped, previewed and drawn into the calendar in the browser.
+After the calendar is generated, only the **finished print files** are saved to Cloudflare R2 (bucket `helios-calendars`):
+`calendars/<year>/<ARN or mobile>.png` (2195 × 2795 px, 300 dpi, lossless) and `.pdf` (526.68 × 670.68 pt, trim + bleed).
+One fixed key per distributor, so re-downloading overwrites the files instead of adding new ones.
+Uploads use short-lived presigned URLs issued by `/api/upload-urls` (needs the login cookie).
 
 ## Project structure
 
