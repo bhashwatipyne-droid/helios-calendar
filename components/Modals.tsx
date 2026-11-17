@@ -56,7 +56,7 @@ export function ReplaceModal({ onCancel, onConfirm }: { onCancel: () => void; on
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12, width: '100%' }}>
           <button type="button" className="btn ghost" onClick={onCancel}>
-            Keep my saved calendar
+            Keep saved calendar
           </button>
           <button type="button" className="btn" onClick={onConfirm}>
             Create again

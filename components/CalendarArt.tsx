@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type ChangeEvent } from 'react';
+import { useMemo, type ChangeEvent, type MouseEvent } from 'react';
 import {
   ASSETS, COLORS, FIRST_ROW_CY, FRAME, HOLE, LOGO, PAGE_H, PAGE_W, WEEKDAYS, WEEKDAY_CY, YEAR_PATH, YEAR_STROKE,
   buildMonths, cellLeft, cellTop, pctX, pctY, CELL_H,
@@ -10,10 +10,18 @@ type Props = {
   photo: string | null;
   processing: boolean;
   onFile: (file: File | undefined) => void;
+  /** When true, clicking the photo area opens `onBlocked` instead of the file picker. */
+  locked?: boolean;
+  onBlocked?: () => void;
 };
 
 /* eslint-disable @next/next/no-img-element */
-export default function CalendarArt({ photo, processing, onFile }: Props) {
+export default function CalendarArt({ photo, processing, onFile, locked = false, onBlocked }: Props) {
+  const guard = (e: MouseEvent<HTMLLabelElement>) => {
+    if (!locked) return;
+    e.preventDefault(); // don't open the file picker yet
+    onBlocked?.();
+  };
   const months = useMemo(() => buildMonths(), []);
   const showEmpty = !photo && !processing;
 
@@ -24,7 +32,7 @@ export default function CalendarArt({ photo, processing, onFile }: Props) {
 
         <div className="hole" style={{ left: pctX(HOLE.x), top: pctY(HOLE.y), width: pctX(HOLE.w), height: pctY(HOLE.h) }}>
           {showEmpty && (
-            <label className="empty">
+            <label className="empty" onClick={guard}>
               <span className="up">Upload your photo here</span>
               <span className="note">
                 Photo of 5:4 (landscape) aspect ratio is
@@ -44,7 +52,7 @@ export default function CalendarArt({ photo, processing, onFile }: Props) {
             </label>
           )}
           {photo && (
-            <label className="filled" title="Change photo">
+            <label className="filled" title="Change photo" onClick={guard}>
               <img src={photo} alt="Your uploaded photo" />
               <span className="change-chip">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -32,7 +32,9 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
   const [format, setFormat] = useState<Format>('jpg');
   const [menuOpen, setMenuOpen] = useState(false);
   const [stored, setStored] = useState(false); // this ARN/mobile already has a calendar saved
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmFor, setConfirmFor] = useState<null | 'pick' | 'download'>(null); // the 'already saved' warning, and what to do after it
+  const [replaceOk, setReplaceOk] = useState(false); // user has agreed to replace the saved calendar
+  const needsConfirm = stored && !replaceOk;
   const fileInput = useRef<HTMLInputElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +71,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
 
   function pickAnotherPhoto() {
     setSuccess(false);
+    if (needsConfirm) return setConfirmFor('pick'); // warn BEFORE they choose a new photo
     fileInput.current?.click();
   }
 
@@ -114,6 +117,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       saveBlob(jpeg, `helios-calendar-${YEAR}.jpg`);
       if (await storeFinalCalendar(jpeg)) {
         setStored(true);
+        setReplaceOk(false); // the next change asks again
         setSuccess(true);
       } else {
         setError('Your calendar was downloaded, but we could not save it for printing. Please check your internet connection and click Download again.');
@@ -127,7 +131,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
 
   /** First calendar saves straight away; a second one asks first, because it replaces the saved one. */
   function requestDownload() {
-    if (stored) setConfirmOpen(true);
+    if (needsConfirm) setConfirmFor('download'); // safety net if the check finished late
     else void download();
   }
 
@@ -167,7 +171,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
         </div>
 
         <div className="cp-card">
-          <CalendarArt photo={photo} processing={processing} onFile={handleFile} />
+          <CalendarArt photo={photo} processing={processing} onFile={handleFile} locked={needsConfirm} onBlocked={() => setConfirmFor('pick')} />
         </div>
 
         {error && (
@@ -248,12 +252,15 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
       </div>
 
       {success && <SuccessModal format="JPEG" onClose={() => setSuccess(false)} />}
-      {confirmOpen && (
+      {confirmFor && (
         <ReplaceModal
-          onCancel={() => setConfirmOpen(false)}
+          onCancel={() => setConfirmFor(null)}
           onConfirm={() => {
-            setConfirmOpen(false);
-            void download();
+            const next = confirmFor;
+            setConfirmFor(null);
+            setReplaceOk(true);
+            if (next === 'pick') fileInput.current?.click();
+            else void download();
           }}
         />
       )}
