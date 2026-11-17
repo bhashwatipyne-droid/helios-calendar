@@ -69,9 +69,10 @@ export const pctY = (pt: number) => `${((pt / PAGE_H) * 100).toFixed(3)}%`;
 export const cellLeft = (col: number) => `${(((FIRST_COL_CX - CELL_W / 2 + col * CELL_W) / MONTH_W) * 100).toFixed(3)}%`;
 export const cellTop = (cy: number) => `${(((cy - CELL_H / 2) / MONTH_BOX_H) * 100).toFixed(3)}%`;
 
-function loadImage(src: string): Promise<HTMLImageElement | null> {
+function loadImage(src: string, crossOrigin?: 'anonymous'): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
+    if (crossOrigin) img.crossOrigin = crossOrigin; // needed so a remote image doesn't taint the canvas
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = src;
@@ -79,6 +80,23 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
 }
 
 export { loadImage };
+
+// Sample portrait (AI-generated, not a real person) shown in "Preview sample". Served by Cloudinary, already cropped to 5:4 and optimised.
+export const SAMPLE_PHOTO_URL =
+  'https://res.cloudinary.com/oubdneg7/image/upload/c_fill,w_1000,h_800,q_auto:good,f_jpg/v1794907690/helios-calendar/sample-photo.jpg';
+
+let samplePhotoPromise: Promise<HTMLImageElement | null> | null = null;
+
+/** Loads the sample portrait once (null if offline — the preview then falls back to the silhouette). */
+export function loadSamplePhoto() {
+  if (!samplePhotoPromise) {
+    samplePhotoPromise = loadImage(SAMPLE_PHOTO_URL, 'anonymous').then((img) => {
+      if (!img) samplePhotoPromise = null;
+      return img;
+    });
+  }
+  return samplePhotoPromise;
+}
 
 let assetsPromise: Promise<{ doodles: HTMLImageElement | null; frame: HTMLImageElement | null; logo: HTMLImageElement | null }> | null = null;
 
@@ -129,12 +147,13 @@ export async function drawCalendar(photo: HTMLImageElement | null, opts: { sampl
   x.beginPath();
   x.rect(HOLE.x, HOLE.y, HOLE.w, HOLE.h);
   x.clip();
-  if (photo) {
-    const s = Math.max(HOLE.w / photo.naturalWidth, HOLE.h / photo.naturalHeight);
-    const dw = photo.naturalWidth * s;
-    const dh = photo.naturalHeight * s;
+  const shown = photo ?? (opts.sample ? await loadSamplePhoto() : null);
+  if (shown) {
+    const s = Math.max(HOLE.w / shown.naturalWidth, HOLE.h / shown.naturalHeight);
+    const dw = shown.naturalWidth * s;
+    const dh = shown.naturalHeight * s;
     x.imageSmoothingQuality = 'high';
-    x.drawImage(photo, HOLE.x + (HOLE.w - dw) / 2, HOLE.y + (HOLE.h - dh) / 2, dw, dh);
+    x.drawImage(shown, HOLE.x + (HOLE.w - dw) / 2, HOLE.y + (HOLE.h - dh) / 2, dw, dh);
   } else if (opts.sample) {
     x.fillStyle = '#F6D6C4';
     x.fillRect(HOLE.x, HOLE.y, HOLE.w, HOLE.h);

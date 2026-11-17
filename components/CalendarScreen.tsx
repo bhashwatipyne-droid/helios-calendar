@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import CalendarArt from './CalendarArt';
 import { SuccessModal, SampleModal, ReplaceModal } from './Modals';
 import PhotoCropper, { CROP_RATIO } from './PhotoCropper';
-import { YEAR, drawCalendar, loadImage, preloadCalendarAssets } from '@/lib/calendar';
+import { YEAR, drawCalendar, loadImage, preloadCalendarAssets, loadSamplePhoto } from '@/lib/calendar';
 import { canvasToJpeg, saveBlob, storeFinalCalendar } from '@/lib/export';
 
 type Format = 'jpg';
@@ -45,6 +45,7 @@ export default function CalendarScreen({ userLabel }: { userLabel: string }) {
 
   useEffect(() => {
     void preloadCalendarAssets(); // warm the fonts/artwork while the user picks a photo
+    void loadSamplePhoto(); // and the sample portrait for "Preview sample"
   }, []);
 
   useEffect(() => () => {
