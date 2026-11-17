@@ -10,7 +10,7 @@ export function normaliseArn(raw: string): string | null {
 
 /** Corporate domains allowed on the employee URL (comma-separated env var). */
 export function employeeDomains(): string[] {
-  return (process.env.EMPLOYEE_EMAIL_DOMAINS || 'heliosmf.in')
+  return (process.env.EMPLOYEE_EMAIL_DOMAINS || 'helioscapital.in')
     .split(',')
     .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
     .filter(Boolean);
